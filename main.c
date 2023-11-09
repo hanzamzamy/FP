@@ -6,7 +6,7 @@
 #define IS_ALPHA(arr,size,pos) ((arr[pos] >= 'a' && arr[pos] <= 'z') && BOUND_CHECK(pos,size))
 #define IS_VOWEL(c) ((c == 'a')||(c == 'i')||(c == 'u')||(c == 'e')||(c == 'o'))
 
-const int WLEN = 4096;
+const int WLEN = 1024;
 
 int parseStr(char *buff){
     printf("Masukan kalimat (maks. %d karakter):\n", WLEN-1);
@@ -48,10 +48,10 @@ void syllSplt(char *buff, int len){
                         }
                         for(int k = sb; k <= j;k++)printf("%c", buff[k]);
                         printf("-");
-                        vow = 0,cons=0,sb = j+1;
+                        vow = 0,cons=0,mcons=0,sb = j+1;
                     }
                 }else if(vow){
-                    if(cons == 2 && mcons > 0) mcons--;
+                    if(cons == 1 && mcons > 0) mcons--;
                     switch (prevChar) {
                         case 'n':(currChar != 'y'&&currChar != 'g') ? cons++ : mcons++;break;
                         case 's':(currChar != 'y') ? cons++ : mcons++;break;
