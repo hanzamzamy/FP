@@ -26,14 +26,15 @@ typedef struct {
 
 // Definisi Tipe Data Register Syllable Splitter.
 // Member:
-// - begin    <uint8_t>: Posisi karakter awal suku kata.
-// - vow      <uint8_t>: Jumlah huruf vokal (sebagai flag).
-// - sCons    <uint8_t>: Jumlah huruf konsonan tunggal & jamak.
-// - mCons    <uint8_t>: Jumlah huruf konsonan jamak.
-// - prevChar <uint8_t>: Karakter yang sebelumnya dibaca.
-// - currChar <uint8_t>: Karakter yang dibaca sekarang.
+// - begin    <uint16_t>: Posisi karakter awal suku kata.
+// - vow      <uint8_t> : Jumlah huruf vokal (sebagai flag).
+// - sCons    <uint8_t> : Jumlah huruf konsonan tunggal & jamak.
+// - mCons    <uint8_t> : Jumlah huruf konsonan jamak.
+// - prevChar <uint8_t> : Karakter yang sebelumnya dibaca.
+// - currChar <uint8_t> : Karakter yang dibaca sekarang.
 typedef struct {
-    uint8_t begin,vow,sCons,mCons,prevChar,currChar;
+    uint16_t begin;
+    uint8_t vow,sCons,mCons,prevChar,currChar;
 }sSplt_t;
 
 // Variabel Kerja Global
