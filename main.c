@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <string.h>
-
+		
 // Periksa Batasan Array.
 #define BOUND_CHECK(p,s) (p >= 0 && p < s)
 // Periksa Karakter Alfabet.
@@ -10,12 +10,13 @@
 // Periksa Huruf Vokal.
 #define IS_VOWEL(c) ((c == 'a')||(c == 'i')||(c == 'u')||(c == 'e')||(c == 'o')\
 ||(c == 'A')||(c == 'I')||(c == 'U')||(c == 'E')||(c == 'O'))
-// Flag Set untuk Register.
+	
+// Flag Set untuk Record.
 #define SET 2
 // Maksimum Karakter pada Teks.
-#define WLEN 1996379264
-
-// Definisi Tipe Data Register Word Splitter.
+#define WLEN 1234567890 //Maks. teoritis: 2147483647
+		
+// Definisi Tipe Data Splitter Record.
 // Member:
 // - begin    <uint32_t>: Posisi karakter awal kata.
 // - end      <uint32_t>: Posisi karakter akhir kata.
@@ -29,120 +30,126 @@ typedef struct {
     uint32_t begin,end;
     uint8_t flag:2,sCons:6,vow:2,mCons:6,prevChar:8,currChar:8;
 }splt_t;
-
-// Variabel Kerja Global
-splt_t reg;
+		
+// Deklarasi Global Variabel Kerja & Fungsi.
+		
+// Splitter Record.
+splt_t rec;
+// Buffer Teks.
 char line[WLEN];
-
-// Parsing Data stdin ke Buffer. Ubah Semua Karakter ke Lowercase.
+		
+// Parsing Data stdin ke Buffer. Maksimum Sepanjang Ukuran Buffer.
 // Parameter:
 // - buff <char*>: Array karakter untuk menyimpan data.
 // Return Value:
-// - len <size_t>: Panjang string (termasuk NULL terminator).
+// - <size_t>: Panjang string.
 size_t parseStr(char *buff){
     printf("Masukan kalimat (maks. %u karakter):\n", WLEN-1);
     fgets(buff, WLEN, stdin);
     return strlen(buff);
 }
-
-// Parsing Kata dari Teks yang Diberikan. Simpan Data ke Register.
+		
+// Parsing Kata dari Teks yang Diberikan. Simpan Data ke Record.
 // Parameter:
-// - buff <char*>   : Buffer penyimpanan teks.
+// - buff <char*> : Buffer penyimpanan teks.
 // - len  <size_t>: Panjang buffer (untuk bounding check).
 // - i    <size_t>: Indeks pembacaan karakter pada teks.
 void parseWord(char *buff, size_t len, size_t i){
     if(!IS_ALPHA(buff,len,i)){
-        printf("%c", buff[i]);  // Cetak langsung karakter non alfabet.
+    printf("%c", buff[i]);  // Cetak langsung karakter non alfabet.
     }else{
-        if(!IS_ALPHA(buff,len,i-1) && IS_ALPHA(buff,len,i)) reg.begin=i,reg.flag++;
-        if(!IS_ALPHA(buff,len,i+1) && IS_ALPHA(buff,len,i)) reg.end=i,reg.flag++;
+        if(!IS_ALPHA(buff,len,i-1) && IS_ALPHA(buff,len,i)) rec.begin=i,rec.flag++;
+        if(!IS_ALPHA(buff,len,i+1) && IS_ALPHA(buff,len,i)) rec.end=i,rec.flag++;
     }   // Cari awal & akhir kata.
 }
-
-// Kembalikan Status Pencacah Huruf ke Nol. Simpan Perubahan ke Register.
+		
+// Kembalikan Status Pencacah Huruf ke Nol. Simpan Perubahan ke Record.
 void rstCount(){
-    reg.sCons=0;reg.mCons=0;reg.vow=0;reg.prevChar = ' ';
+    rec.sCons=0;rec.mCons=0;rec.vow=0;rec.prevChar = ' ';
 }
-
+		
 // Cetak Setiap Karakter pada Suku Kata. Tambahkan Separator untuk Tengah Kata.
 // Parameter:
-// - buff <char*>   : Buffer penyimpanan teks.
+// - buff <char*> : Buffer penyimpanan teks.
 // - n    <size_t>: Indeks karakter terakhir pada suku kata.
-// - add  <char*>   : Separator suku kata (opsional).
+// - add  <char*> : Separator suku kata (opsional).
 void printSyll(char *buff, size_t n, char *add){
-    for(size_t i = reg.begin; i <= n;i++)printf("%c", buff[i]);
+    for(size_t i = rec.begin; i <= n;i++) printf("%c", buff[i]);
     printf("%s", add);
 }
-
-// Parsing Suku Kata pada Kata. Operasi Register.
+		
+// Parsing Suku Kata pada Kata. Operasikan Record.
 // Parameter:
-// - buff <char*>    : Buffer penyimpanan teks.
+// - buff <char*>  : Buffer penyimpanan teks.
 // - n    <size_t*>: Indeks pembacaan karakter pada kata.
 void parseSyll(char *buff, size_t *n){
-    switch(reg.sCons){
+    switch(rec.sCons){
         case 0 : *n -= 1;break;
-        case 1 : *n -= (1 + reg.sCons + reg.mCons);break;
-        default: *n -= (1 + (reg.sCons - 1 - reg.mCons)+(2 * reg.mCons));break;
+        case 1 : *n -= (1 + rec.sCons + rec.mCons);break;
+        default: *n -= (1 + (rec.sCons - 1 - rec.mCons)+(2 * rec.mCons));break;
     }   // Ubah indeks mundur ke akhir suku kata.
     printSyll(buff, *n, "-");   // Cetak suku kata beserta separator.
-    reg.begin=*n+1;rstCount(); // Karakter awal tepat setelah karakter akhir.
+    rec.begin=*n+1;rstCount();  // Karakter awal tepat setelah karakter akhir.
 }
-
-// Periksa Huruf Vokal beserta Diftong/Monoftong. Simpan Pencacahan ke Register.
+		
+// Periksa Huruf Vokal beserta Diftong/Monoftong. Simpan Pencacahan ke Record.
 void vowelCheck(){
-    switch(reg.prevChar){
-        case 'a': case 'e': if(reg.currChar != 'i'&& reg.currChar != 'u') reg.vow++;break;
-        case 'o': if(reg.currChar != 'i') reg.vow++;break;
-        default : reg.vow++;
+    switch(rec.prevChar){
+        case 'a':
+        case 'e': if(rec.currChar != 'i' && rec.currChar != 'u') rec.vow++;break;
+        case 'o': if(rec.currChar != 'i') rec.vow++;break;
+        default : rec.vow++;
     }   // Jika diftong/monoftong ditemukan, cukup cacah sekali.
 }
-
-// Periksa Huruf Konsonan beserta konsonan jamak. Simpan Pencacahan ke Register.
+		
+// Periksa Huruf Konsonan beserta konsonan jamak. Simpan Pencacahan ke Record.
 void consonantCheck(){
     // Konsonan jamak sebelum pemisah suku kata tidak dihitung.
-    if(reg.sCons == 1 && reg.mCons > 0) reg.mCons--;
-    switch(reg.prevChar){
-        case 'n':(reg.currChar != 'y'&& reg.currChar != 'g') ?
-                 reg.sCons++ : reg.mCons++;break;
-        case 's':(reg.currChar != 'y') ? reg.sCons++ : reg.mCons++;break;
-        case 'k':(reg.currChar != 'h') ? reg.sCons++ : reg.mCons++;break;
-        default:reg.sCons++; // Konsonan jamak masuk ke konsonan tunggal untuk klasifikasi.
-    }   // Data terpisah konsonan jamak untuk kalkulasi lokasi pemisah suku kata.
+    if(rec.sCons == 1 && rec.mCons > 0) rec.mCons--;
+    // Konsonan jamak dicacah untuk kalkulasi lokasi pemisah suku kata.
+    switch(rec.prevChar){
+        case 'n':(rec.currChar != 'y'&& rec.currChar != 'g') ? 
+        rec.sCons++ : rec.mCons++;break;
+        case 's':(rec.currChar != 'y') ? rec.sCons++ : rec.mCons++;break;
+        case 'k':(rec.currChar != 'h') ? rec.sCons++ : rec.mCons++;break;
+        default:rec.sCons++;
+    }   // Konsonan jamak juga masuk ke konsonan tunggal untuk klasifikasi.
 }
-
-// Periksa Setiap Karakter pada Kata secara berurutan. Operasi Penuh Pemisah Suku Kata.
+		
+// Periksa Setiap Karakter pada Kata secara berurutan. Operasi Pemisah Suku Kata.
 // Parameter:
 // - buff <char*>: Buffer penyimpanan teks.
 void strideWord(char *buff){
-    reg.flag = 0;  // Reset flag word splitter.
-    rstCount();     // Inisialisasi register syllable splitter.
-    for(size_t i = reg.begin;i <= reg.end;i++){ // Untuk setiap huruf pada kata.
-        reg.currChar = buff[i];
-        if(IS_VOWEL(reg.currChar)){   // Huruf vokal sebagai flag syllable splitter.
+    rec.flag = 0;   // Reset flag word splitter.
+    rstCount();     // Inisialisasi ulang record pemisah suku kata.
+    for(size_t i = rec.begin;i <= rec.end;i++){     // Untuk setiap huruf pada kata.
+        rec.currChar = buff[i];
+        if(IS_VOWEL(rec.currChar)){     // Huruf vokal sebagai flag splitter suku kata.
             vowelCheck();
-            if(reg.vow == SET) parseSyll(buff, &i); // Cetak suku kata yang ditemukan.
-        }else if(reg.vow)             // Hanya baca konsonan setelah huruf vokal pertama.
+            if(rec.vow == SET) parseSyll(buff, &i); // Cetak suku kata yang ditemukan.
+        }else if(rec.vow)               // Hanya baca konsonan setelah huruf vokal pertama.
             consonantCheck();
-        reg.prevChar = reg.currChar; // Simpan huruf sebelumnya (pemeriksaan huruf jamak).
+        rec.prevChar = rec.currChar;    // Simpan huruf sebelumnya (periksa huruf jamak).
     }
-    printSyll(buff, reg.end,""); // Cetak suku kata di akhir kata (tanpa separator).
+    printSyll(buff, rec.end,"");        // Cetak suku kata di akhir kata (tanpa separator).
 }
-
+		
 // Fungsi Utama Pemisah Suku Kata. Pengulangan untuk Setiap Karakter pada Teks.
 // Parameter:
-// - buff   <char*>   : Buffer penyimpanan teks.
+// - buff   <char*> : Buffer penyimpanan teks.
 // - len    <size_t>: Panjang teks.
 void syllSplit(char *buff, size_t len){
-    reg.flag=0;
+    rec.flag=0;
     for(size_t i = 0;i < len;i++){
         parseWord(buff, len, i);
-        if(reg.flag == SET) strideWord(buff);
+        if(rec.flag == SET) strideWord(buff);
     }
 }
-
+		
 // Fungsi Utama Program.
+// Return Value:
+// - <int>: Exit code 0 jika program berjalan normal.
 int main() {
-    printf("%llu", sizeof(splt_t));
     size_t len = parseStr(line);
     syllSplit(line, len);
     return 0;
