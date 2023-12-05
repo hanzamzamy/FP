@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.26)
-project(FP C)
+project(FP)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 add_executable(FP main.c)
